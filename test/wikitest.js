@@ -1,8 +1,9 @@
 var expect = require('chai').expect;
 var supertest = require('supertest');
-
+var Sequelize = require('sequelize');
 var chai = require("chai");
-
+var Express = require('express');
+var Swig = require('swig');
 var spies = require('chai-spies');
 var models = require('../models')
 var Page = models.Page
@@ -14,8 +15,9 @@ api = supertest('http://localhost:3001')
 
 
 describe('Page model', function () {
-  var page, modelA, modelB
+  var page, modelA, modelB, db;
   beforeEach(function() {
+    db = new Sequelize('postgres://localhost:5432/wikistack')
     page = Page.build();
 
     // console.log(page.dataValues)
@@ -43,9 +45,8 @@ describe('Page model', function () {
     });
     describe('renderedContent', function () {
       it('converts the markdown-formatted content into HTML', function() {
-        api.get(page.route)
- //         .set('Accept', 'application/json')
-         .expect(200)
+        page.content = "This is the content of my page.";
+        expect(res.render(page.content)).to.equal('<div class="page-body">This is the content of my page.</div>')
    
       })
     });
@@ -56,9 +57,37 @@ describe('Page model', function () {
   });
 
   describe('Class methods', function () {
+    beforeEach(function (done) {
+      Page.create({
+        title: 'foo',
+        content: 'bar',
+        tags: ['foo', 'bar']
+      })
+      .then(function (pages) {
+        done();
+      })
+      .catch(done);
+    });
+    afterEach(function() {
+      Page.sync({force: true});
+    })
     describe('findByTag', function () {
-      it('gets pages with the search tag');
-      it('does not get pages without the search tag');
+      it('gets pages with the search tag', function() {
+          Page.findByTag('bar')
+            .then(function (pages) {
+              expect(pages).to.have.lengthOf(1);
+              done();
+          })
+            .catch(done);
+      });
+      it('does not get pages without the search tag', function() {
+          Page.findByTag('falafel')
+            .then(function (pages) {
+              expect(pages).to.have.lengthOf(0);
+              done();
+            })
+            .catch(done);
+          });
     });
   });
 
