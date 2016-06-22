@@ -46,7 +46,7 @@ describe('Page model', function () {
     describe('renderedContent', function () {
       it('converts the markdown-formatted content into HTML', function() {
         page.content = "This is the content of my page.";
-        expect(res.render(page.content)).to.equal('<div class="page-body">This is the content of my page.</div>')
+        expect(page.renderedContent.trim()).to.equal('<p>This is the content of my page.</p>')
    
       })
     });
@@ -57,30 +57,41 @@ describe('Page model', function () {
   });
 
   describe('Class methods', function () {
+    var page;
     beforeEach(function (done) {
+      //instantiated promise
       Page.create({
         title: 'foo',
         content: 'bar',
         tags: ['foo', 'bar']
       })
       .then(function (pages) {
+        page = pages;
         done();
       })
       .catch(done);
     });
-    afterEach(function() {
-      Page.sync({force: true});
-    })
+    // afterEach(function() {
+    //   Page.destroy({
+    //     where: {
+    //       title: 'foo'
+    //     }
+    //   }).
+    //   then(function(done) {
+    //     done();
+    //   })
+    //})
     describe('findByTag', function () {
-      it('gets pages with the search tag', function() {
+      it('gets pages with the search tag', function(done) {
           Page.findByTag('bar')
             .then(function (pages) {
+              console.log("page is ", pages);
               expect(pages).to.have.lengthOf(1);
               done();
           })
-            .catch(done);
+            //.catch(done);
       });
-      it('does not get pages without the search tag', function() {
+      it('does not get pages without the search tag', function(done) {
           Page.findByTag('falafel')
             .then(function (pages) {
               expect(pages).to.have.lengthOf(0);
